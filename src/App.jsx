@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { WebhookManager } from './components/WebhookManager'
 import { MessageBuilder } from './components/MessageBuilder'
@@ -14,6 +14,26 @@ function App() {
   const [message, setMessage] = useState(createEmptyMessage())
   const [sending, setSending] = useState(false)
   const [status, setStatus] = useState({ type: '', text: '' })
+  const [statusFading, setStatusFading] = useState(false)
+
+  // Auto-dismiss success messages after 4 seconds
+  useEffect(() => {
+    if (status.type === 'success' && status.text) {
+      const fadeTimer = setTimeout(() => {
+        setStatusFading(true)
+      }, 3700) // Start fade animation before dismissal
+
+      const dismissTimer = setTimeout(() => {
+        setStatus({ type: '', text: '' })
+        setStatusFading(false)
+      }, 4000)
+
+      return () => {
+        clearTimeout(fadeTimer)
+        clearTimeout(dismissTimer)
+      }
+    }
+  }, [status])
 
   const handleSend = async () => {
     const webhook = webhooks.find(w => w.id === selectedWebhook)
@@ -39,6 +59,7 @@ function App() {
   const handleClear = () => {
     setMessage(createEmptyMessage())
     setStatus({ type: '', text: '' })
+    setStatusFading(false)
   }
 
   const updateEmbeds = (embeds) => {
@@ -82,7 +103,7 @@ function App() {
             <button
               onClick={handleSend}
               disabled={sending || !selectedWebhook}
-              className="btn btn-primary btn-large"
+              className={`btn btn-primary btn-large${sending ? ' sending' : ''}`}
             >
               {sending ? 'Sending...' : 'Send Message'}
             </button>
@@ -95,7 +116,7 @@ function App() {
           </div>
 
           {status.text && (
-            <div className={`status-message ${status.type}`}>
+            <div className={`status-message ${status.type}${statusFading ? ' fade-out' : ''}`}>
               {status.text}
             </div>
           )}

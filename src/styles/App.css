@@ -55,7 +55,8 @@ body {
 .main {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 24px;
+  align-items: start;
 }
 
 @media (max-width: 1200px) {
@@ -72,7 +73,19 @@ body {
 .preview-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+}
+
+.preview-section {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+}
+
+@media (max-width: 1200px) {
+  .preview-section {
+    position: static;
+  }
 }
 
 .footer {
@@ -91,6 +104,7 @@ body {
   background-color: var(--bg-secondary);
   border-radius: 8px;
   padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 h2 {
@@ -141,12 +155,13 @@ h3 {
   border-radius: var(--border-radius);
   color: var(--text-primary);
   font-size: 0.9375rem;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .input-field:focus {
   outline: none;
   border-color: var(--blurple);
+  box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.25);
 }
 
 .input-field::placeholder {
@@ -175,7 +190,7 @@ h3 {
   font-weight: 500;
   cursor: pointer;
   border: none;
-  transition: background-color 0.15s, opacity 0.15s;
+  transition: background-color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
 .btn:disabled {
@@ -190,6 +205,26 @@ h3 {
 
 .btn-primary:hover:not(:disabled) {
   background-color: var(--blurple-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-primary.sending {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .btn-secondary {
@@ -328,6 +363,18 @@ h3 {
 .embed-card-content {
   padding: 16px;
   border-top: 1px solid var(--bg-accent);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .form-section {
@@ -391,24 +438,27 @@ h3 {
 
 .color-presets {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .color-preset {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   border: 2px solid transparent;
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .color-preset:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .color-preset.selected {
   border-color: white;
+  box-shadow: 0 0 0 2px var(--blurple);
 }
 
 .color-input {
@@ -481,12 +531,39 @@ h3 {
   border-radius: var(--border-radius);
   margin-top: 12px;
   font-size: 0.875rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .status-message.success {
   background-color: rgba(87, 242, 135, 0.1);
   color: var(--green);
   border: 1px solid var(--green);
+}
+
+.status-message.fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
 }
 
 .status-message.error {
