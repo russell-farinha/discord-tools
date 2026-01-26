@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { WebhookManager } from './components/WebhookManager'
 import { MessageBuilder } from './components/MessageBuilder'
@@ -67,9 +68,15 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app page-enter">
       <header className="header">
-        <h1>Discord Webhook Message Builder</h1>
+        <Link to="/" className="back-link">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+          All Tools
+        </Link>
+        <h1>Webhook Message Builder</h1>
         <p>Create and send custom messages to Discord webhooks</p>
       </header>
 

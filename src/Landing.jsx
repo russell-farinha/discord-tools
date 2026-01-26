@@ -3,7 +3,7 @@ import './styles/Landing.css'
 
 function Landing() {
   return (
-    <div className="landing">
+    <div className="landing page-enter">
       <header className="landing-header">
         <h1>Discord Tools</h1>
         <p>A collection of useful tools for Discord</p>
