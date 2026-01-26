@@ -4,7 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/discord.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Discord Webhook Message Builder</title>
+    <title>Discord Tools</title>
+    <!-- GitHub Pages SPA redirect handler -->
+    <script type="text/javascript">
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
