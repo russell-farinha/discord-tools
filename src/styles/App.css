@@ -463,6 +463,11 @@ h3 {
   gap: 8px;
 }
 
+.embed-reorder {
+  display: flex;
+  gap: 4px;
+}
+
 .expand-icon {
   color: var(--text-muted);
   font-size: 0.875rem;
@@ -993,6 +998,170 @@ h3 {
 .spoiler:hover {
   background-color: transparent;
   color: inherit;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: modalEnter 0.2s ease-out;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.template-bulk-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.bulk-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Top bar */
+.top-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.top-bar-section {
+  flex: 1;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 16px;
+}
+
+.top-bar-section h2 {
+  margin-bottom: 12px;
+}
+
+.selector-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.selector-row select {
+  flex: 1;
+}
+
+select {
+  width: 100%;
+  padding: 10px 32px 10px 10px;
+  background-color: var(--input-bg);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  /* Custom dropdown arrow for cross-browser consistency */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23b5bac1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--blurple);
+}
+
+select:hover:not(:focus) {
+  box-shadow: 0 0 0 1px var(--bg-accent);
+}
+
+select option {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 8px;
+}
+
+/* Bottom actions */
+.bottom-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.bottom-actions .btn-primary {
+  flex: 1;
+}
+
+/* Webhook compact mode */
+.webhook-manager-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.webhook-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  animation: slideDown 0.2s ease-out;
 }
 
 /* Timestamp inputs */

@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { isValidWebhookUrl } from '../utils/discord'
 
-export function WebhookManager({ webhooks, setWebhooks, selectedWebhook, setSelectedWebhook }) {
+export function WebhookManager({ webhooks, setWebhooks, selectedWebhook, setSelectedWebhook, compact }) {
   const [newWebhook, setNewWebhook] = useState('')
   const [webhookName, setWebhookName] = useState('')
   const [error, setError] = useState('')
+  const [showAddForm, setShowAddForm] = useState(false)
 
   const handleAddWebhook = () => {
     setError('')
@@ -33,6 +34,7 @@ export function WebhookManager({ webhooks, setWebhooks, selectedWebhook, setSele
     setWebhooks([...webhooks, webhook])
     setNewWebhook('')
     setWebhookName('')
+    setShowAddForm(false)
 
     if (!selectedWebhook) {
       setSelectedWebhook(webhook.id)
@@ -40,6 +42,7 @@ export function WebhookManager({ webhooks, setWebhooks, selectedWebhook, setSele
   }
 
   const handleRemoveWebhook = (id) => {
+    if (!confirm('Remove this webhook?')) return
     setWebhooks(webhooks.filter(w => w.id !== id))
     if (selectedWebhook === id) {
       const remaining = webhooks.filter(w => w.id !== id)
@@ -53,6 +56,65 @@ export function WebhookManager({ webhooks, setWebhooks, selectedWebhook, setSele
     }
   }
 
+  // Compact mode: dropdown + add button
+  if (compact) {
+    return (
+      <div className="webhook-manager-compact">
+        <div className="selector-row">
+          <select
+            value={selectedWebhook || ''}
+            onChange={(e) => setSelectedWebhook(e.target.value || null)}
+          >
+            {webhooks.length === 0 && <option value="">No webhooks</option>}
+            {webhooks.map(w => (
+              <option key={w.id} value={w.id}>{w.name}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn btn-secondary"
+          >
+            {showAddForm ? 'Cancel' : 'Add'}
+          </button>
+          {selectedWebhook && (
+            <button
+              onClick={() => handleRemoveWebhook(selectedWebhook)}
+              className="btn btn-danger"
+              title="Remove selected webhook"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+
+        {showAddForm && (
+          <div className="webhook-add-form">
+            <input
+              type="text"
+              placeholder="Name (optional)"
+              value={webhookName}
+              onChange={(e) => setWebhookName(e.target.value)}
+              className="input-field"
+            />
+            <input
+              type="text"
+              placeholder="https://discord.com/api/webhooks/..."
+              value={newWebhook}
+              onChange={(e) => setNewWebhook(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+            />
+            <button onClick={handleAddWebhook} className="btn btn-primary">
+              Add Webhook
+            </button>
+            {error && <p className="error-message">{error}</p>}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Full mode (original)
   return (
     <div className="webhook-manager">
       <h2>Webhooks</h2>

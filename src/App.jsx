@@ -1,28 +1,44 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { WebhookManager } from './components/WebhookManager'
 import { MessageBuilder } from './components/MessageBuilder'
 import { EmbedBuilder } from './components/EmbedBuilder'
 import { Preview } from './components/Preview'
-import { TemplateManager } from './components/TemplateManager'
+import { TemplateModal } from './components/TemplateModal'
 import { sendWebhookMessage, createEmptyMessage, LIMITS, getEmbedTotalChars } from './utils/discord'
 
 function App() {
   const [webhooks, setWebhooks] = useLocalStorage('discord-webhooks', [])
   const [templates, setTemplates] = useLocalStorage('discord-templates', [])
   const [selectedWebhook, setSelectedWebhook] = useState(webhooks[0]?.id || null)
+  const [selectedTemplate, setSelectedTemplate] = useState('new')
   const [message, setMessage] = useState(createEmptyMessage())
   const [sending, setSending] = useState(false)
   const [status, setStatus] = useState({ type: '', text: '' })
   const [statusFading, setStatusFading] = useState(false)
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const lastSavedMessage = useRef(null)
+  const isInitialMount = useRef(true)
+
+  // Track unsaved changes (skip initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      lastSavedMessage.current = JSON.stringify(message)
+      return
+    }
+    const currentMessage = JSON.stringify(message)
+    setHasUnsavedChanges(currentMessage !== lastSavedMessage.current)
+  }, [message])
 
   // Auto-dismiss success messages after 4 seconds
   useEffect(() => {
     if (status.type === 'success' && status.text) {
       const fadeTimer = setTimeout(() => {
         setStatusFading(true)
-      }, 3700) // Start fade animation before dismissal
+      }, 3700)
 
       const dismissTimer = setTimeout(() => {
         setStatus({ type: '', text: '' })
@@ -76,6 +92,76 @@ function App() {
   const validationErrors = getValidationErrors()
   const hasErrors = validationErrors.length > 0
 
+  const handleTemplateChange = (templateId) => {
+    if (hasUnsavedChanges) {
+      if (!confirm('You have unsaved changes. Discard them?')) {
+        return
+      }
+    }
+
+    setSelectedTemplate(templateId)
+
+    if (templateId === 'new') {
+      const newMessage = createEmptyMessage()
+      setMessage(newMessage)
+      lastSavedMessage.current = JSON.stringify(newMessage)
+    } else {
+      const template = templates.find(t => t.id === templateId)
+      if (template) {
+        const loadedMessage = JSON.parse(JSON.stringify(template.message))
+        setMessage(loadedMessage)
+        lastSavedMessage.current = JSON.stringify(loadedMessage)
+      }
+    }
+    setHasUnsavedChanges(false)
+  }
+
+  const handleSave = () => {
+    if (selectedTemplate === 'new') {
+      // Prompt for name
+      const existingNumbers = templates
+        .map(t => {
+          const match = t.name.match(/^New Template (\d+)$/)
+          return match ? parseInt(match[1]) : 0
+        })
+        .filter(n => n > 0)
+      const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1
+      const defaultName = `New Template ${nextNumber}`
+
+      const name = prompt('Enter template name:', defaultName)
+      if (!name) return
+
+      if (templates.some(t => t.name === name.trim())) {
+        setStatus({ type: 'error', text: 'A template with this name already exists' })
+        return
+      }
+
+      const newTemplate = {
+        id: Date.now().toString(),
+        name: name.trim(),
+        message: JSON.parse(JSON.stringify(message)),
+        createdAt: new Date().toISOString(),
+      }
+
+      setTemplates([...templates, newTemplate])
+      setSelectedTemplate(newTemplate.id)
+      lastSavedMessage.current = JSON.stringify(message)
+      setHasUnsavedChanges(false)
+      setStatus({ type: 'success', text: 'Template saved!' })
+    } else {
+      // Update existing template
+      const updatedTemplates = templates.map(t =>
+        t.id === selectedTemplate
+          ? { ...t, message: JSON.parse(JSON.stringify(message)) }
+          : t
+      )
+      setTemplates(updatedTemplates)
+      lastSavedMessage.current = JSON.stringify(message)
+      setHasUnsavedChanges(false)
+      setStatus({ type: 'success', text: 'Template updated!' })
+    }
+  }
+
   const handleSend = async () => {
     const webhook = webhooks.find(w => w.id === selectedWebhook)
 
@@ -103,7 +189,16 @@ function App() {
   }
 
   const handleClear = () => {
-    setMessage(createEmptyMessage())
+    if (hasUnsavedChanges) {
+      if (!confirm('You have unsaved changes. Discard them?')) {
+        return
+      }
+    }
+    const newMessage = createEmptyMessage()
+    setMessage(newMessage)
+    setSelectedTemplate('new')
+    lastSavedMessage.current = JSON.stringify(newMessage)
+    setHasUnsavedChanges(false)
     setStatus({ type: '', text: '' })
     setStatusFading(false)
   }
@@ -127,12 +222,39 @@ function App() {
 
       <main className="main">
         <div className="builder-section">
-          <WebhookManager
-            webhooks={webhooks}
-            setWebhooks={setWebhooks}
-            selectedWebhook={selectedWebhook}
-            setSelectedWebhook={setSelectedWebhook}
-          />
+          <div className="top-bar">
+            <div className="top-bar-section">
+              <h2>Webhook</h2>
+              <WebhookManager
+                webhooks={webhooks}
+                setWebhooks={setWebhooks}
+                selectedWebhook={selectedWebhook}
+                setSelectedWebhook={setSelectedWebhook}
+                compact
+              />
+            </div>
+
+            <div className="top-bar-section">
+              <h2>Template</h2>
+              <div className="selector-row">
+                <select
+                  value={selectedTemplate}
+                  onChange={(e) => handleTemplateChange(e.target.value)}
+                >
+                  <option value="new">New Template</option>
+                  {templates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowTemplateModal(true)}
+                  className="btn btn-secondary"
+                >
+                  Manage
+                </button>
+              </div>
+            </div>
+          </div>
 
           <MessageBuilder
             message={message}
@@ -144,14 +266,7 @@ function App() {
             setEmbeds={updateEmbeds}
           />
 
-          <TemplateManager
-            templates={templates}
-            setTemplates={setTemplates}
-            message={message}
-            setMessage={setMessage}
-          />
-
-          <div className="actions">
+          <div className="bottom-actions">
             <button
               onClick={handleSend}
               disabled={sending || !selectedWebhook || hasErrors}
@@ -159,6 +274,13 @@ function App() {
               title={hasErrors ? validationErrors[0] : ''}
             >
               {sending ? 'Sending...' : 'Send Message'}
+            </button>
+            <button
+              onClick={handleSave}
+              className="btn btn-secondary btn-large"
+            >
+              {selectedTemplate === 'new' ? 'Save Template' : 'Update Template'}
+              {hasUnsavedChanges && ' •'}
             </button>
             <button
               onClick={handleClear}
@@ -187,6 +309,13 @@ function App() {
           This app communicates directly with Discord's API.
         </p>
       </footer>
+
+      <TemplateModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        templates={templates}
+        setTemplates={setTemplates}
+      />
     </div>
   )
 }

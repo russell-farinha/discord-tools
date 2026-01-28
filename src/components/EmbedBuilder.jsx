@@ -69,6 +69,15 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
     setEmbeds(newEmbeds)
   }
 
+  const moveEmbed = (index, direction) => {
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= embeds.length) return
+    const newEmbeds = [...embeds]
+    ;[newEmbeds[index], newEmbeds[newIndex]] = [newEmbeds[newIndex], newEmbeds[index]]
+    setEmbeds(newEmbeds)
+    setExpandedEmbed(newIndex)
+  }
+
   return (
     <div className="embed-builder">
       <div className="embed-header">
@@ -97,6 +106,30 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
               {embed.title && `: ${embed.title}`}
             </span>
             <div className="embed-card-actions">
+              <div className="embed-reorder">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    moveEmbed(index, -1)
+                  }}
+                  className="btn btn-secondary btn-icon"
+                  disabled={index === 0}
+                  title="Move up"
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    moveEmbed(index, 1)
+                  }}
+                  className="btn btn-secondary btn-icon"
+                  disabled={index === embeds.length - 1}
+                  title="Move down"
+                >
+                  ▼
+                </button>
+              </div>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
