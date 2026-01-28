@@ -1,7 +1,12 @@
+import { LIMITS } from '../utils/discord'
+
 export function MessageBuilder({ message, setMessage }) {
   const updateField = (field, value) => {
     setMessage({ ...message, [field]: value })
   }
+
+  const contentOver = message.content.length > LIMITS.content
+  const usernameOver = message.username.length > LIMITS.username
 
   return (
     <div className="message-builder">
@@ -14,10 +19,12 @@ export function MessageBuilder({ message, setMessage }) {
           placeholder="Enter your message here..."
           value={message.content}
           onChange={(e) => updateField('content', e.target.value)}
-          className="input-field textarea"
+          className={`input-field textarea ${contentOver ? 'input-error' : ''}`}
           rows={4}
         />
-        <span className="char-count">{message.content.length}/2000</span>
+        <span className={`char-count ${contentOver ? 'char-count-error' : ''}`}>
+          {message.content.length}/{LIMITS.content}
+        </span>
       </div>
 
       <div className="form-row">
@@ -29,8 +36,13 @@ export function MessageBuilder({ message, setMessage }) {
             placeholder="Custom bot name"
             value={message.username}
             onChange={(e) => updateField('username', e.target.value)}
-            className="input-field"
+            className={`input-field ${usernameOver ? 'input-error' : ''}`}
           />
+          {message.username.length > 0 && (
+            <span className={`char-count ${usernameOver ? 'char-count-error' : ''}`}>
+              {message.username.length}/{LIMITS.username}
+            </span>
+          )}
         </div>
 
         <div className="form-group">

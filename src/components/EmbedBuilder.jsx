@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ColorPicker } from './ColorPicker'
-import { createEmptyEmbed } from '../utils/discord'
+import { TimestampInput } from './TimestampInput'
+import { createEmptyEmbed, LIMITS, getEmbedTotalChars } from '../utils/discord'
 
 export function EmbedBuilder({ embeds, setEmbeds }) {
   const [expandedEmbed, setExpandedEmbed] = useState(0)
@@ -58,6 +59,16 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
     setEmbeds(newEmbeds)
   }
 
+  const moveField = (embedIndex, fieldIndex, direction) => {
+    const newEmbeds = [...embeds]
+    const fields = [...newEmbeds[embedIndex].fields]
+    const newIndex = fieldIndex + direction
+    if (newIndex < 0 || newIndex >= fields.length) return
+    ;[fields[fieldIndex], fields[newIndex]] = [fields[newIndex], fields[fieldIndex]]
+    newEmbeds[embedIndex].fields = fields
+    setEmbeds(newEmbeds)
+  }
+
   return (
     <div className="embed-builder">
       <div className="embed-header">
@@ -101,6 +112,11 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
 
           {expandedEmbed === index && (
             <div className="embed-card-content">
+              {getEmbedTotalChars(embed) > LIMITS.embedTotal && (
+                <div className="embed-warning">
+                  Total embed characters: {getEmbedTotalChars(embed)}/{LIMITS.embedTotal} (over limit)
+                </div>
+              )}
               <div className="form-section">
                 <h3>Basic Info</h3>
                 <div className="form-group">
@@ -110,8 +126,13 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
                     value={embed.title}
                     onChange={(e) => updateEmbed(index, 'title', e.target.value)}
                     placeholder="Embed title"
-                    className="input-field"
+                    className={`input-field ${embed.title.length > LIMITS.embedTitle ? 'input-error' : ''}`}
                   />
+                  {embed.title.length > 0 && (
+                    <span className={`char-count ${embed.title.length > LIMITS.embedTitle ? 'char-count-error' : ''}`}>
+                      {embed.title.length}/{LIMITS.embedTitle}
+                    </span>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -120,9 +141,14 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
                     value={embed.description}
                     onChange={(e) => updateEmbed(index, 'description', e.target.value)}
                     placeholder="Embed description (supports markdown)"
-                    className="input-field textarea"
+                    className={`input-field textarea ${embed.description.length > LIMITS.embedDescription ? 'input-error' : ''}`}
                     rows={3}
                   />
+                  {embed.description.length > 0 && (
+                    <span className={`char-count ${embed.description.length > LIMITS.embedDescription ? 'char-count-error' : ''}`}>
+                      {embed.description.length}/{LIMITS.embedDescription}
+                    </span>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -144,15 +170,10 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Timestamp</label>
-                  <input
-                    type="datetime-local"
-                    value={embed.timestamp ? embed.timestamp.slice(0, 16) : ''}
-                    onChange={(e) => updateEmbed(index, 'timestamp', e.target.value ? new Date(e.target.value).toISOString() : '')}
-                    className="input-field"
-                  />
-                </div>
+                <TimestampInput
+                  timestamp={embed.timestamp}
+                  onChange={(ts) => updateEmbed(index, 'timestamp', ts)}
+                />
               </div>
 
               <div className="form-section">
@@ -165,8 +186,13 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
                       value={embed.author.name}
                       onChange={(e) => updateNestedField(index, 'author', 'name', e.target.value)}
                       placeholder="Author name"
-                      className="input-field"
+                      className={`input-field ${embed.author.name.length > LIMITS.embedAuthorName ? 'input-error' : ''}`}
                     />
+                    {embed.author.name.length > 0 && (
+                      <span className={`char-count ${embed.author.name.length > LIMITS.embedAuthorName ? 'char-count-error' : ''}`}>
+                        {embed.author.name.length}/{LIMITS.embedAuthorName}
+                      </span>
+                    )}
                   </div>
                   <div className="form-group">
                     <label>Author URL</label>
@@ -227,8 +253,13 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
                       value={embed.footer.text}
                       onChange={(e) => updateNestedField(index, 'footer', 'text', e.target.value)}
                       placeholder="Footer text"
-                      className="input-field"
+                      className={`input-field ${embed.footer.text.length > LIMITS.embedFooterText ? 'input-error' : ''}`}
                     />
+                    {embed.footer.text.length > 0 && (
+                      <span className={`char-count ${embed.footer.text.length > LIMITS.embedFooterText ? 'char-count-error' : ''}`}>
+                        {embed.footer.text.length}/{LIMITS.embedFooterText}
+                      </span>
+                    )}
                   </div>
                   <div className="form-group">
                     <label>Footer Icon URL</label>
@@ -257,6 +288,27 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
 
                 {embed.fields.map((field, fieldIndex) => (
                   <div key={fieldIndex} className="field-item">
+                    <div className="field-header">
+                      <span className="field-number">Field {fieldIndex + 1}</span>
+                      <div className="field-reorder">
+                        <button
+                          onClick={() => moveField(index, fieldIndex, -1)}
+                          className="btn btn-secondary btn-icon"
+                          disabled={fieldIndex === 0}
+                          title="Move up"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          onClick={() => moveField(index, fieldIndex, 1)}
+                          className="btn btn-secondary btn-icon"
+                          disabled={fieldIndex === embed.fields.length - 1}
+                          title="Move down"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </div>
                     <div className="form-row">
                       <div className="form-group">
                         <label>Name</label>
@@ -265,18 +317,28 @@ export function EmbedBuilder({ embeds, setEmbeds }) {
                           value={field.name}
                           onChange={(e) => updateField(index, fieldIndex, 'name', e.target.value)}
                           placeholder="Field name"
-                          className="input-field"
+                          className={`input-field ${field.name.length > LIMITS.embedFieldName ? 'input-error' : ''}`}
                         />
+                        {field.name.length > 0 && (
+                          <span className={`char-count ${field.name.length > LIMITS.embedFieldName ? 'char-count-error' : ''}`}>
+                            {field.name.length}/{LIMITS.embedFieldName}
+                          </span>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Value</label>
-                        <input
-                          type="text"
+                        <textarea
                           value={field.value}
                           onChange={(e) => updateField(index, fieldIndex, 'value', e.target.value)}
-                          placeholder="Field value"
-                          className="input-field"
+                          placeholder="Field value (supports newlines)"
+                          className={`input-field textarea-small ${field.value.length > LIMITS.embedFieldValue ? 'input-error' : ''}`}
+                          rows={2}
                         />
+                        {field.value.length > 0 && (
+                          <span className={`char-count ${field.value.length > LIMITS.embedFieldValue ? 'char-count-error' : ''}`}>
+                            {field.value.length}/{LIMITS.embedFieldValue}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="field-actions">

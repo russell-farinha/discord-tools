@@ -6,7 +6,7 @@ import { MessageBuilder } from './components/MessageBuilder'
 import { EmbedBuilder } from './components/EmbedBuilder'
 import { Preview } from './components/Preview'
 import { TemplateManager } from './components/TemplateManager'
-import { sendWebhookMessage, createEmptyMessage } from './utils/discord'
+import { sendWebhookMessage, createEmptyMessage, LIMITS, getEmbedTotalChars } from './utils/discord'
 
 function App() {
   const [webhooks, setWebhooks] = useLocalStorage('discord-webhooks', [])
@@ -36,11 +36,56 @@ function App() {
     }
   }, [status])
 
+  const getValidationErrors = () => {
+    const errors = []
+    if (message.content.length > LIMITS.content) {
+      errors.push(`Message content exceeds ${LIMITS.content} characters`)
+    }
+    if (message.username.length > LIMITS.username) {
+      errors.push(`Username exceeds ${LIMITS.username} characters`)
+    }
+    message.embeds.forEach((embed, i) => {
+      const n = i + 1
+      if (embed.title.length > LIMITS.embedTitle) {
+        errors.push(`Embed ${n} title exceeds ${LIMITS.embedTitle} characters`)
+      }
+      if (embed.description.length > LIMITS.embedDescription) {
+        errors.push(`Embed ${n} description exceeds ${LIMITS.embedDescription} characters`)
+      }
+      if (embed.author.name.length > LIMITS.embedAuthorName) {
+        errors.push(`Embed ${n} author name exceeds ${LIMITS.embedAuthorName} characters`)
+      }
+      if (embed.footer.text.length > LIMITS.embedFooterText) {
+        errors.push(`Embed ${n} footer exceeds ${LIMITS.embedFooterText} characters`)
+      }
+      if (getEmbedTotalChars(embed) > LIMITS.embedTotal) {
+        errors.push(`Embed ${n} total exceeds ${LIMITS.embedTotal} characters`)
+      }
+      embed.fields.forEach((field, j) => {
+        if (field.name.length > LIMITS.embedFieldName) {
+          errors.push(`Embed ${n} field ${j + 1} name exceeds ${LIMITS.embedFieldName} characters`)
+        }
+        if (field.value.length > LIMITS.embedFieldValue) {
+          errors.push(`Embed ${n} field ${j + 1} value exceeds ${LIMITS.embedFieldValue} characters`)
+        }
+      })
+    })
+    return errors
+  }
+
+  const validationErrors = getValidationErrors()
+  const hasErrors = validationErrors.length > 0
+
   const handleSend = async () => {
     const webhook = webhooks.find(w => w.id === selectedWebhook)
 
     if (!webhook) {
       setStatus({ type: 'error', text: 'Please select a webhook' })
+      return
+    }
+
+    if (hasErrors) {
+      setStatus({ type: 'error', text: validationErrors[0] })
       return
     }
 
@@ -109,8 +154,9 @@ function App() {
           <div className="actions">
             <button
               onClick={handleSend}
-              disabled={sending || !selectedWebhook}
+              disabled={sending || !selectedWebhook || hasErrors}
               className={`btn btn-primary btn-large${sending ? ' sending' : ''}`}
+              title={hasErrors ? validationErrors[0] : ''}
             >
               {sending ? 'Sending...' : 'Send Message'}
             </button>

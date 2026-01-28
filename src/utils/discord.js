@@ -4,6 +4,33 @@ export function isValidWebhookUrl(url) {
   return DISCORD_WEBHOOK_REGEX.test(url)
 }
 
+// Discord character limits
+export const LIMITS = {
+  content: 2000,
+  username: 80,
+  embedTitle: 256,
+  embedDescription: 4096,
+  embedFieldName: 256,
+  embedFieldValue: 1024,
+  embedFooterText: 2048,
+  embedAuthorName: 256,
+  embedTotal: 6000, // total chars per embed
+}
+
+export function getEmbedTotalChars(embed) {
+  let total = 0
+  if (embed.title) total += embed.title.length
+  if (embed.description) total += embed.description.length
+  if (embed.author?.name) total += embed.author.name.length
+  if (embed.footer?.text) total += embed.footer.text.length
+  if (embed.fields) {
+    embed.fields.forEach(f => {
+      total += (f.name?.length || 0) + (f.value?.length || 0)
+    })
+  }
+  return total
+}
+
 export function buildPayload(message) {
   const payload = {}
 
