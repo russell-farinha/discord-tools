@@ -1,3 +1,58 @@
+// Parse Discord markdown to React elements
+function parseDiscordMarkdown(text) {
+  if (!text) return null
+
+  const elements = []
+  let key = 0
+
+  // Regex patterns for Discord markdown
+  const patterns = [
+    // Code blocks (must be first to avoid inner parsing)
+    { regex: /```(\w*)\n?([\s\S]*?)```/g, render: (match) => <code key={key++} className="code-block">{match[2]}</code> },
+    // Inline code
+    { regex: /`([^`]+)`/g, render: (match) => <code key={key++} className="inline-code">{match[1]}</code> },
+    // Links [text](url)
+    { regex: /\[([^\]]+)\]\(([^)]+)\)/g, render: (match) => <a key={key++} href={match[2]} target="_blank" rel="noopener noreferrer">{match[1]}</a> },
+    // Bold **text**
+    { regex: /\*\*([^*]+)\*\*/g, render: (match) => <strong key={key++}>{match[1]}</strong> },
+    // Underline __text__
+    { regex: /__([^_]+)__/g, render: (match) => <u key={key++}>{match[1]}</u> },
+    // Italic *text* or _text_
+    { regex: /\*([^*]+)\*/g, render: (match) => <em key={key++}>{match[1]}</em> },
+    { regex: /_([^_]+)_/g, render: (match) => <em key={key++}>{match[1]}</em> },
+    // Strikethrough ~~text~~
+    { regex: /~~([^~]+)~~/g, render: (match) => <s key={key++}>{match[1]}</s> },
+    // Spoiler ||text||
+    { regex: /\|\|([^|]+)\|\|/g, render: (match) => <span key={key++} className="spoiler">{match[1]}</span> },
+  ]
+
+  // Simple approach: process patterns sequentially
+  let remaining = text
+  let result = []
+
+  // Process the text by finding matches and splitting
+  const processText = (str) => {
+    for (const pattern of patterns) {
+      const match = pattern.regex.exec(str)
+      if (match) {
+        pattern.regex.lastIndex = 0 // Reset regex
+        const beforeMatch = str.slice(0, match.index)
+        const afterMatch = str.slice(match.index + match[0].length)
+
+        return [
+          ...processText(beforeMatch),
+          pattern.render(match),
+          ...processText(afterMatch)
+        ]
+      }
+    }
+    // No matches, return plain text
+    return str ? [str] : []
+  }
+
+  return processText(text)
+}
+
 export function Preview({ message }) {
   const hasContent = message.content?.trim()
   const hasEmbeds = message.embeds?.length > 0 && message.embeds.some(e =>
@@ -69,7 +124,7 @@ export function Preview({ message }) {
             </div>
 
             {hasContent && (
-              <div className="message-text">{message.content}</div>
+              <div className="message-text">{parseDiscordMarkdown(message.content)}</div>
             )}
 
             {message.embeds?.map((embed, index) => {
@@ -120,7 +175,7 @@ export function Preview({ message }) {
                       )}
 
                       {embed.description && (
-                        <div className="embed-description">{embed.description}</div>
+                        <div className="embed-description">{parseDiscordMarkdown(embed.description)}</div>
                       )}
 
                       {embed.fields?.length > 0 && (
@@ -131,8 +186,8 @@ export function Preview({ message }) {
                                 key={fieldIndex}
                                 className={`embed-field ${field.inline ? 'inline' : ''}`}
                               >
-                                <div className="embed-field-name">{field.name}</div>
-                                <div className="embed-field-value">{field.value}</div>
+                                <div className="embed-field-name">{parseDiscordMarkdown(field.name)}</div>
+                                <div className="embed-field-value">{parseDiscordMarkdown(field.value)}</div>
                               </div>
                             ) : null
                           ))}

@@ -948,6 +948,53 @@ h3 {
   border-radius: 50%;
 }
 
+/* Discord markdown styles */
+.message-text a,
+.embed-description a,
+.embed-field-value a {
+  color: var(--text-link);
+  text-decoration: none;
+}
+
+.message-text a:hover,
+.embed-description a:hover,
+.embed-field-value a:hover {
+  text-decoration: underline;
+}
+
+.inline-code {
+  background-color: var(--bg-tertiary);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.875em;
+}
+
+.code-block {
+  display: block;
+  background-color: var(--bg-tertiary);
+  padding: 8px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.875em;
+  white-space: pre-wrap;
+  margin: 4px 0;
+}
+
+.spoiler {
+  background-color: var(--text-muted);
+  color: transparent;
+  border-radius: 3px;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.spoiler:hover {
+  background-color: transparent;
+  color: inherit;
+}
+
 /* Timestamp inputs */
 .timestamp-header {
   display: flex;
